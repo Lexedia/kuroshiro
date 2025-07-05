@@ -118,10 +118,10 @@ String toRawRomaji(
     final regHatu = RegExp(
       r'(ん|ン)(?=あ|い|う|え|お|ア|イ|ウ|エ|オ|ぁ|ぃ|ぅ|ぇ|ぉ|ァ|ィ|ゥ|ェ|ォ|や|ゆ|よ|ヤ|ユ|ヨ|ゃ|ゅ|ょ|ャ|ュ|ョ)',
     );
-    RegExpMatch? match;
+    final matches = regHatu.allMatches(str);
     final indices = <int>[];
-    while ((match = regHatu.firstMatch(str)) != null) {
-      indices.add(match!.start + 1);
+    for (final match in matches) {
+      indices.add(match.start + 1);
     }
 
     if (indices.isNotEmpty) {
@@ -1420,7 +1420,7 @@ List<TokenizerResponse> patchTokens(List<TokenizerResponse> tokens) {
           tokens[i - 1].pronunciation = '${tokens[i - 1].reading}ー';
         }
         tokens[i - 1].reading = '${tokens[i - 1].reading}ウ';
-        tokens.sublist(i, 1);
+        tokens.removeAt(i);
         i--;
       }
     }
