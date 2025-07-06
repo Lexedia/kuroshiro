@@ -1,3 +1,6 @@
+## 1.0.4
+- Fixed a typo when deserialising `TokenizerResponse`.
+
 ## 1.0.3
 - Bumped `kuromoji` to `1.0.2`.
 
