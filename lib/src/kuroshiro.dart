@@ -4,18 +4,47 @@ import 'package:kuromoji/src/tokenizer.dart';
 import 'package:kuroshiro/src/models/tokenizer_response.dart';
 import 'package:kuroshiro/src/utils.dart';
 
-enum ConvertTo { hiragana, katakana, romaji }
+/// An enum representing the available conversion systems for Japanese text.
+enum ConvertTo {
+  /// Convert to hiragana.
+  hiragana,
 
-enum ConvertMode { normal, spaced, okurigana, furigana }
+  /// Convert to katakana.
+  katakana,
 
+  /// Convert to romaji.
+  romaji
+}
+
+/// Conversion modes for Japanese text.
+enum ConvertMode {
+  /// Normal conversion without spaces.
+  normal,
+
+  /// Conversion with spaces between tokens.
+  spaced,
+
+  /// Conversion with furigana.
+  okurigana,
+
+  /// Conversion with furigana and romaji.
+  furigana
+}
+
+/// Conversion system for Japanese text.
 class Kuroshiro {
   late final Tokenizer tokenizer;
 
+  /// Creates a new instance of [Kuroshiro].
   Future<Kuroshiro> init() async {
     tokenizer = await TokenizerBuilder().build();
     return this;
   }
 
+  /// Converts a given [str] to the specified [to] format.
+  /// The [mode] determines how the conversion is applied.
+  /// The [romajiSystem] specifies the romanization system to use for romaji conversion.
+  /// The [delimiterStart] and [delimiterEnd] are used for furigana conversion.
   Future<String> convert(
     String str, {
     ConvertTo to = ConvertTo.hiragana,
@@ -76,11 +105,9 @@ class Kuroshiro {
                 final hmatches = hreg.firstMatch(tokens[hi].reading!);
                 if (hmatches != null) {
                   var pickKJ = 0;
-                  for (
-                    int hc1 = 0;
-                    hc1 < tokens[hi].surfaceForm.length;
-                    hc1++
-                  ) {
+                  for (int hc1 = 0;
+                      hc1 < tokens[hi].surfaceForm.length;
+                      hc1++) {
                     if (isKanji(tokens[hi].surfaceForm[hc1])) {
                       tmp += hmatches[pickKJ + 1]!;
                       pickKJ++;
