@@ -4,7 +4,7 @@ version: 1.0.1
 repository: https://github.com/Lexedia/kuroshiro
 
 environment:
-  sdk: ^3.8.0
+  sdk: ^3.0.0
 
 dependencies:
   kuromoji: ^1.0.0
