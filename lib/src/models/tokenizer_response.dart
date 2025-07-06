@@ -32,7 +32,7 @@ class TokenizerResponse {
         posDetail1: raw['pos_detail_1'],
         posDetail2: raw['pos_detail_2'],
         posDetail3: raw['pos_detail_3'],
-        pronunciation: raw['pronounciation'],
+        pronunciation: raw['pronunciation'],
         reading: raw['reading'],
         surfaceForm: raw['surface_form'],
       );
