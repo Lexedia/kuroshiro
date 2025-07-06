@@ -1,3 +1,6 @@
+## 1.0.3
+- Bumped `kuromoji` to `1.0.2`.
+
 ## 1.0.2
 - Lowered the minimum sdk constraint to `3.0.0`.
 
