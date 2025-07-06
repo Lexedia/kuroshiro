@@ -165,10 +165,10 @@ packages:
     dependency: "direct main"
     description:
       name: kuromoji
-      sha256: "69120a2f286f14c3e95bc6d542140ca737ec24e5a4712d59289eb25f3658b7ef"
+      sha256: "98d21f9ccbf3b1430573519a5cf2826d3e6cf2d986dc98e11c1308a1d5c907ff"
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.1"
+    version: "1.0.2"
   lints:
     dependency: "direct dev"
     description:
