@@ -1417,19 +1417,20 @@ List<TokenizerResponse> patchTokens(List<TokenizerResponse> tokens) {
 
   for (int i = 0; i < tokens.length; i++) {
     final token = tokens[i];
+    TokenizerResponse? prevToken;
     if (token.pos.isNotEmpty &&
         token.pos == '助動詞' &&
         (token.surfaceForm == 'う' || token.surfaceForm == 'ウ')) {
       if (i - 1 >= 0 &&
-          tokens[i - 1].pos.isNotEmpty &&
-          tokens[i - 1].pos == '動詞') {
-        tokens[i - 1].surfaceForm = 'う';
-        if (tokens[i - 1].pronunciation != null) {
-          tokens[i - 1].pronunciation = 'ー';
+          (prevToken = tokens[i - 1]).pos.isNotEmpty &&
+          prevToken.pos == '動詞') {
+        prevToken.surfaceForm += 'う';
+        if (prevToken.pronunciation != null) {
+          prevToken.pronunciation = '${prevToken.pronunciation}ー';
         } else {
-          tokens[i - 1].pronunciation = '${tokens[i - 1].reading}ー';
+          prevToken.pronunciation = '${prevToken.reading}ー';
         }
-        tokens[i - 1].reading = '${tokens[i - 1].reading}ウ';
+        prevToken.reading = '${prevToken.reading}ウ';
         tokens.removeAt(i);
         i--;
       }
@@ -1447,15 +1448,14 @@ List<TokenizerResponse> patchTokens(List<TokenizerResponse> tokens) {
         tokens[j].surfaceForm += nextToken.surfaceForm;
         if (token.pronunciation != null) {
           tokens[j].pronunciation =
-              '${token.pronunciation}${nextToken.pronunciation ?? nextToken.reading ?? ''}'; // Handle potential nulls for nextToken.pronunciation/reading
+              '${token.pronunciation}${nextToken.pronunciation ?? nextToken.reading ?? ''}';
         } else {
           tokens[j].pronunciation =
-              '${token.reading ?? ''}${nextToken.reading ?? ''}'; // Handle potential nulls
+              '${token.reading ?? ''}${nextToken.reading ?? ''}';
         }
-        tokens[j].reading =
-            '${token.reading ?? ''}${nextToken.reading ?? ''}'; // Handle potential nulls
-        tokens.removeAt(j + 1); // Remove the next token
-        j--; // Decrement j after removing an element
+        tokens[j].reading = '${token.reading ?? ''}${nextToken.reading ?? ''}';
+        tokens.removeAt(j + 1);
+        j--;
       }
     }
   }

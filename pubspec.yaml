@@ -7,7 +7,7 @@ environment:
   sdk: ^3.0.0
 
 dependencies:
-  kuromoji: ^1.0.2
+  kuromoji: ^1.0.4
 
 dev_dependencies:
   lints: ^5.0.0
