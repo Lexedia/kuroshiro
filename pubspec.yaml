@@ -1,6 +1,6 @@
 name: kuroshiro
 description: Easy to use Japanese text processing/conversion library for Dart.
-version: 1.0.4
+version: 1.0.5
 repository: https://github.com/Lexedia/kuroshiro
 
 environment:

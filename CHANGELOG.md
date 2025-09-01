@@ -1,3 +1,6 @@
+## 1.0.5
+- Fixed an issue when patching tokens.
+
 ## 1.0.4
 - Fixed a typo when deserialising `TokenizerResponse`.
 
