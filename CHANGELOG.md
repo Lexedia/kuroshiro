@@ -1,3 +1,8 @@
+## 1.1.0-dev.1
+- Added `ConvertMode.spacedIgnoreNonJp` to add spaces only between Japanese words when converting to Romaji.
+- Bumped `kuromoji` to `2.0.0-dev.1`.
+- Deprecated `Kuroshiro.init()` constructor in favour of the default constructor.
+
 ## 1.0.5
 - Fixed an issue when patching tokens.
 
