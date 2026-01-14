@@ -1,7 +1,4 @@
 import 'package:kuromoji/kuromoji.dart';
-// ignore: implementation_imports
-import 'package:kuromoji/src/tokenizer.dart';
-import 'package:kuroshiro/src/models/tokenizer_response.dart';
 import 'package:kuroshiro/src/utils.dart';
 
 /// An enum representing the available conversion systems for Japanese text.
@@ -24,6 +21,9 @@ enum ConvertMode {
   /// Conversion with spaces between tokens.
   spaced,
 
+  /// Conversion with spaces between tokens, ignoring non-Japanese characters.
+  spacedIgnoreNonJp,
+
   /// Conversion with furigana.
   okurigana,
 
@@ -35,9 +35,12 @@ enum ConvertMode {
 class Kuroshiro {
   late final Tokenizer tokenizer;
 
+  Kuroshiro() : tokenizer = Tokenizer.buildSync();
+
   /// Creates a new instance of [Kuroshiro].
-  Future<Kuroshiro> init() async {
-    tokenizer = await TokenizerBuilder().build();
+  @Deprecated('Use the default constructor instead.')
+  Kuroshiro init() {
+    tokenizer = Tokenizer.buildSync();
     return this;
   }
 
@@ -53,18 +56,20 @@ class Kuroshiro {
     String delimiterStart = '(',
     String delimiterEnd = ')',
   }) async {
-    final rawTokens = tokenizer.tokenize(str);
-    final mappedTokens = rawTokens.map(TokenizerResponse.fromMap).toList();
-    final tokens = patchTokens(mappedTokens);
+    final tokens = tokenizer.tokenize(str);
+    final patchedTokens = patchTokens(tokens);
 
-    if (mode case ConvertMode.normal || ConvertMode.spaced) {
+    if (mode
+        case ConvertMode.normal ||
+            ConvertMode.spaced ||
+            ConvertMode.spacedIgnoreNonJp) {
       switch (to) {
         case ConvertTo.katakana when mode == ConvertMode.spaced:
-          return tokens.map((token) => token.reading!).join();
+          return patchedTokens.map((token) => token.reading!).join();
         case ConvertTo.katakana when mode == ConvertMode.normal:
-          return tokens.map((token) => token.reading!).join(' ');
+          return patchedTokens.map((token) => token.reading!).join(' ');
         case ConvertTo.romaji:
-          String romajiConv(TokenizerResponse token) {
+          String romajiConv(UnknownToken<String?> token) {
             String preToken;
             if (hasJapanese(token.surfaceForm)) {
               preToken = token.pronunciation ?? token.reading!;
@@ -75,21 +80,45 @@ class Kuroshiro {
             return toRawRomaji(preToken, romajiSystem);
           }
 
+          bool noSpaceAfter = false;
+
+          String romajiConvSpacedIgnoreNonJp(UnknownToken<String?> token) {
+            final table = getRomajiSystem(romajiSystem);
+            String preToken;
+            if (hasJapanese(token.surfaceForm)) {
+              preToken = '${romajiConv(token)}${noSpaceAfter ? '' : ' '}';
+            } else if (table.containsKey(token.surfaceForm)) {
+              noSpaceAfter = true;
+              preToken = table[token.surfaceForm]!;
+            } else {
+              noSpaceAfter = false;
+              preToken = token.surfaceForm;
+            }
+
+            return preToken;
+          }
+
           if (mode == ConvertMode.normal) {
-            return tokens.map(romajiConv).join();
+            return patchedTokens.map(romajiConv).join();
           }
 
           if (mode == ConvertMode.spaced) {
-            return tokens.map(romajiConv).join(' ');
+            return patchedTokens.map(romajiConv).join(' ');
+          }
+
+          if (mode == ConvertMode.spacedIgnoreNonJp) {
+            return patchedTokens.map(romajiConvSpacedIgnoreNonJp).join();
           }
         case ConvertTo.hiragana:
           for (int hi = 0; hi < tokens.length; hi++) {
             if (hasKanji(tokens[hi].surfaceForm)) {
               if (!hasKatakana(tokens[hi].surfaceForm)) {
-                tokens[hi].reading = toRawHiragana(tokens[hi].reading!);
+                tokens[hi] = tokens[hi]
+                    .copyWith(reading: toRawHiragana(tokens[hi].reading!));
               } else {
                 // handle katakana-kanji-mixed tokens
-                tokens[hi].reading = toRawHiragana(tokens[hi].reading!);
+                tokens[hi] = tokens[hi]
+                    .copyWith(reading: toRawHiragana(tokens[hi].reading!));
                 var tmp = "";
                 var hpattern = "";
                 for (int hc = 0; hc < tokens[hi].surfaceForm.length; hc++) {
@@ -115,11 +144,11 @@ class Kuroshiro {
                       tmp += tokens[hi].surfaceForm[hc1];
                     }
                   }
-                  tokens[hi].reading = tmp;
+                  tokens[hi] = tokens[hi].copyWith(reading: tmp);
                 }
               }
             } else {
-              tokens[hi].reading = tokens[hi].surfaceForm;
+              tokens[hi] = tokens[hi].copyWith(reading: tokens[hi].surfaceForm);
             }
           }
           if (mode == ConvertMode.normal) {

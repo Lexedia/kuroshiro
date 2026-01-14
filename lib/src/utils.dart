@@ -1,4 +1,4 @@
-import 'package:kuroshiro/src/models/tokenizer_response.dart';
+import 'package:kuromoji/kuromoji.dart';
 
 /// An enum representing the available romanization systems for Japanese text.
 enum RomanizationSystem {
@@ -1399,38 +1399,38 @@ Map<String, String> getRomajiSystem(RomanizationSystem system) =>
         },
     };
 
-List<TokenizerResponse> patchTokens(List<TokenizerResponse> tokens) {
+List<UnknownToken<String?>> patchTokens(List<UnknownToken<String?>> tokens) {
   for (int cr = 0; cr < tokens.length; cr++) {
     final token = tokens[cr];
     if (hasJapanese(token.surfaceForm)) {
       if (token.reading == null || token.reading?.isEmpty == true) {
         if (token.surfaceForm.split('').every(isKana)) {
-          tokens[cr].reading = token.surfaceForm;
+          tokens[cr] = token.copyWith(surfaceForm: token.surfaceForm);
         }
       } else if (hasHiragana(token.reading!)) {
-        tokens[cr].reading = toRawKatakana(token.reading!);
+        tokens[cr] = token.copyWith(reading: toRawKatakana(token.reading!));
       }
     } else {
-      tokens[cr].reading = token.surfaceForm;
+      tokens[cr] = token.copyWith(reading: token.surfaceForm);
     }
   }
 
   for (int i = 0; i < tokens.length; i++) {
     final token = tokens[i];
-    TokenizerResponse? prevToken;
+    UnknownToken<String?>? prevToken;
     if (token.pos.isNotEmpty &&
         token.pos == '助動詞' &&
         (token.surfaceForm == 'う' || token.surfaceForm == 'ウ')) {
       if (i - 1 >= 0 &&
           (prevToken = tokens[i - 1]).pos.isNotEmpty &&
           prevToken.pos == '動詞') {
-        prevToken.surfaceForm += 'う';
+        prevToken = prevToken.copyWith(surfaceForm: '${prevToken.surfaceForm}う');
         if (prevToken.pronunciation != null) {
-          prevToken.pronunciation = '${prevToken.pronunciation}ー';
+          prevToken = prevToken.copyWith(pronunciation: '${prevToken.pronunciation}ー');
         } else {
-          prevToken.pronunciation = '${prevToken.reading}ー';
+          prevToken = prevToken.copyWith(pronunciation: '${prevToken.reading}ー');
         }
-        prevToken.reading = '${prevToken.reading}ウ';
+        prevToken = prevToken.copyWith(reading: '${prevToken.reading}ウ');
         tokens.removeAt(i);
         i--;
       }
@@ -1443,17 +1443,26 @@ List<TokenizerResponse> patchTokens(List<TokenizerResponse> tokens) {
     if ((token.pos == '動詞' || token.pos == '形容詞') &&
         token.surfaceForm.length > 1 &&
         (token.surfaceForm.endsWith('っ') || token.surfaceForm.endsWith('ッ'))) {
+      final t = tokens[j];
       if (j + 1 < tokens.length) {
         final nextToken = tokens[j + 1];
-        tokens[j].surfaceForm += nextToken.surfaceForm;
+        tokens[j] = t.copyWith(
+          surfaceForm: t.surfaceForm + nextToken.surfaceForm,
+        );
         if (token.pronunciation != null) {
-          tokens[j].pronunciation =
-              '${token.pronunciation}${nextToken.pronunciation ?? nextToken.reading ?? ''}';
+          tokens[j] = t.copyWith(
+            pronunciation:
+                '${token.pronunciation}${nextToken.pronunciation ?? nextToken.reading ?? ''}',
+          );
         } else {
-          tokens[j].pronunciation =
-              '${token.reading ?? ''}${nextToken.reading ?? ''}';
+          tokens[j] = t.copyWith(
+              pronunciation:
+                  '${token.reading ?? ''}${nextToken.reading ?? ''}');
         }
-        tokens[j].reading = '${token.reading ?? ''}${nextToken.reading ?? ''}';
+        tokens[j] = t.copyWith(
+          reading: '${token.reading ?? ''}${nextToken.reading ?? ''}',
+        );
+
         tokens.removeAt(j + 1);
         j--;
       }
@@ -1518,8 +1527,36 @@ String kanaToRomaji(
     toRawRomaji(str, system);
 
 extension on String {
-  operator >(String other) => codeUnits.first > other.codeUnits.first;
-  operator >=(String other) => codeUnits.first >= other.codeUnits.first;
-  operator <(String other) => codeUnits.first < other.codeUnits.first;
-  operator <=(String other) => codeUnits.first <= other.codeUnits.first;
+  bool operator >(String other) => codeUnits.first > other.codeUnits.first;
+  bool operator >=(String other) => codeUnits.first >= other.codeUnits.first;
+  bool operator <(String other) => codeUnits.first < other.codeUnits.first;
+  bool operator <=(String other) => codeUnits.first <= other.codeUnits.first;
+}
+
+extension CopyWithUnknownToken on UnknownToken<String?> {
+  UnknownToken<String?> copyWith({
+    String? surfaceForm,
+    String? reading,
+    String? pronunciation,
+    String? pos,
+    (String, String, String)? posDetails,
+    String? basicForm,
+    String? conjugatedForm,
+    String? conjugatedType,
+    int? wordId,
+    int? wordPosition,
+  }) {
+    return UnknownToken<String?>(
+      surfaceForm: surfaceForm ?? this.surfaceForm,
+      reading: reading ?? this.reading,
+      pronunciation: pronunciation ?? this.pronunciation,
+      pos: pos ?? this.pos,
+      posDetails: posDetails ?? this.posDetails,
+      basicForm: basicForm ?? this.basicForm,
+      conjugatedForm: conjugatedForm ?? this.conjugatedForm,
+      conjugatedType: conjugatedType ?? this.conjugatedType,
+      wordId: wordId ?? this.wordId,
+      wordPosition: wordPosition ?? this.wordPosition,
+    );
+  }
 }
